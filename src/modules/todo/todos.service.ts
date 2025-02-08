@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { status } from '@prisma/client';
-import { BooksDto, QueryParams, TodoDto, UpdateTodoDto } from 'src/dto';
+import { QueryParams, TodoDto, UpdateTodoDto } from 'src/dto';
 
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class BooksService {
+export class TodoService {
   constructor(private readonly prisma: PrismaService) {}
 
   async postTodo(dto: TodoDto, user_id: number) {
@@ -32,20 +32,33 @@ export class BooksService {
     return result;
   }
 
-  async updateTodo(id: number, dto: UpdateTodoDto, user_id: number) {
+  async updateTodo(id: number, dto: UpdateTodoDto, user_id: number, user: any) {
     const result = await this.prisma.$transaction(async (prisma) => {
       const oldData = await prisma.todo.findUnique({
         where: { id: id },
       });
 
-      const data = await prisma.todo.update({
-        where: { id: id },
-        data: {
+      let updateData: any = {};
+
+      if (user.role === 'lead') {
+        updateData = {
           name: dto.name,
           description: dto.description,
           assigne_id: dto.assigne_id,
           status: dto.status,
-        },
+        };
+      } else if (user.role === 'team') {
+        updateData = {
+          description: dto.description,
+          status: dto.status,
+        };
+      } else {
+        throw new Error('Unauthorized: Invalid role');
+      }
+
+      const data = await prisma.todo.update({
+        where: { id: id },
+        data: updateData,
       });
 
       await prisma.todo_audit_log.create({
@@ -60,12 +73,13 @@ export class BooksService {
 
       return data;
     });
+
     return result;
   }
 
   async delete(id: number) {
     const result = await this.prisma.$transaction(async (prisma) => {
-      const data = await prisma.books.delete({
+      const data = await prisma.todo.delete({
         where: {
           id: id,
         },
@@ -76,7 +90,19 @@ export class BooksService {
     return result;
   }
 
- 
+  async getTodoById(id: number) {
+    const result = await this.prisma.$transaction(async (prisma) => {
+      const data = await prisma.todo.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      return data;
+    });
+    return result;
+  }
+
   async getTodo(params: QueryParams) {
     const skip = params.page ? (params.page - 1) * params.per_page : 0;
     const query = [];
@@ -97,6 +123,39 @@ export class BooksService {
         },
       }),
       this.prisma.todo.findMany({
+        skip: params.is_all_data ? undefined : skip,
+        take: params.is_all_data ? undefined : params.per_page,
+        where: {
+          AND: query,
+        },
+        orderBy: {
+          [params.order_by]: params.sort,
+        },
+      }),
+    ]);
+
+    return { total_data, data };
+  }
+  async getRecordsTodo(params: QueryParams) {
+    const skip = params.page ? (params.page - 1) * params.per_page : 0;
+    const query = [];
+
+    if (params.keyword) {
+      query.push({
+        title: {
+          contains: params.keyword,
+          mode: 'insensitive',
+        },
+      });
+    }
+
+    const [total_data, data] = await Promise.all([
+      this.prisma.todo_audit_log.count({
+        where: {
+          AND: query,
+        },
+      }),
+      this.prisma.todo_audit_log.findMany({
         skip: params.is_all_data ? undefined : skip,
         take: params.is_all_data ? undefined : params.per_page,
         where: {

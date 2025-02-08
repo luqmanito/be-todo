@@ -7,18 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model books {
-  id          Int           @id(map: "books_pk") @default(autoincrement())
-  code        String?       @db.VarChar
-  stock       Int
-  title       String        @db.VarChar
-  author      String        @db.VarChar
-  status      String?       @default("Active") @db.VarChar
-  last_update DateTime?     @db.Timestamp(6)
-  created_at  DateTime?     @default(now()) @db.Timestamp(6)
-  circulation circulation[]
-}
-
 model todo {
   id          Int       @id(map: "todo_pk") @default(autoincrement())
   name        String?   @db.VarChar
@@ -45,35 +33,9 @@ model user {
   email      String   @unique
   password   String
   role       String   @default("member")
-  member_id  Int?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   todo       todo[]
-  member     member?  @relation(fields: [member_id], references: [id])
-}
-
-model member {
-  id           Int           @id(map: "member_pk") @default(autoincrement())
-  code         String?       @db.VarChar
-  name         String        @db.VarChar
-  status       String?       @default("Active") @db.VarChar
-  last_update  DateTime?     @db.Timestamp(6)
-  created_at   DateTime?     @default(now()) @db.Timestamp(6)
-  is_penalized DateTime?     @db.Date
-  circulation  circulation[]
-  user         user[]
-}
-
-model circulation {
-  id          Int       @id(map: "circulation_id") @default(autoincrement())
-  books_id    Int
-  member_id   Int
-  last_update DateTime? @db.Timestamp(6)
-  created_at  DateTime? @default(now()) @db.Date
-  status      String    @default("Active") @db.VarChar
-  returned_at DateTime? @db.Date
-  books       books     @relation(fields: [books_id], references: [id])
-  member      member    @relation(fields: [member_id], references: [id])
 }
 
 enum status {

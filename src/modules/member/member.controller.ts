@@ -2,42 +2,20 @@ import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
 import { QueryParams, SUCCESS_STATUS } from 'src/dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MemberService } from './member.service';
-import { MemberDto } from 'src/dto/member.dto';
 
 @Controller('member')
 @ApiTags('Member')
 export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
-  @Post()
-  @ApiOperation({
-    summary: 'Input Member',
-    description: 'Input Member',
-  })
-  async post(@Body() dto: MemberDto) {
-    try {
-      const data = await this.memberService.post(dto);
-      return {
-        data: data,
-        _meta: {
-          code: HttpStatus.CREATED,
-          status: SUCCESS_STATUS,
-          message: 'success post member',
-        },
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
   @Get()
   @ApiOperation({
     summary: 'Get Member',
     description: 'Get member using query params',
   })
-  async get(@Query() params: QueryParams) {
+  async getUser(@Query() params: QueryParams) {
     try {
-      const { total_data, data } = await this.memberService.get(params);
+      const { total_data, data } = await this.memberService.getUser(params);
 
       const metadata = {
         total_count: total_data,

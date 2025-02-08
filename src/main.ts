@@ -1,5 +1,4 @@
 import { NestFactory } from '@nestjs/core';
-
 import { AppModule } from './app.module';
 import { LoggerService } from './common/logger/logger.service';
 import { ValidationPipe } from '@nestjs/common';
@@ -21,8 +20,8 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.setGlobalPrefix('api/v1');
   const config = new DocumentBuilder()
-    .setTitle('DB BOOKS API')
-    .setDescription('API DOCS FOR DB BOOKS')
+    .setTitle('DB TODO API')
+    .setDescription('API DOCS FOR DB TODOS')
     .setVersion('1.0')
     .addServer(`http://localhost:${port}/`, 'Local environment')
     .addServer(`http://192.168.20.210:${port}/`, 'Local Luqman')
